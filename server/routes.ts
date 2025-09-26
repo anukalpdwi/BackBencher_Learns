@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer } from "ws";
 import multer from "multer";
 import { storage } from "./storage";
-import { isAuthenticated } from "./replitAuth"; // Use replitAuth
+// import { isAuthenticated } from "./replitAuth"; // Replit OIDC removed
 import {
   generateExplanation,
   generateQuiz,
@@ -36,15 +36,16 @@ const upload = multer({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
-  app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
-    // The user object is now populated by replitAuth
-    res.json(req.user.claims);
+  app.get("/api/auth/user", async (req: any, res) => {
+    // Auth middleware removed; return dummy or unauthenticated for now
+    res.json({ message: "Not implemented: auth middleware removed" });
   });
 
   // Topic routes
-  app.post("/api/topics", isAuthenticated, async (req: any, res) => {
+  app.post("/api/topics", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub; // Correct way to get user ID
+  // No authentication, use a dummy userId for development
+  const userId = "dev-user";
       const topicData = insertTopicSchema.parse({ ...req.body, userId });
       const topic = await storage.createTopic(topicData);
       await storage.createLearningSession({
@@ -61,9 +62,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/topics", isAuthenticated, async (req: any, res) => {
+  app.get("/api/topics", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub; // Correct way to get user ID
+  // No authentication, use a dummy userId for development
+  const userId = "dev-user";
       const topics = await storage.getUserTopics(userId);
       res.json(topics);
     } catch (error) {
@@ -72,7 +74,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // AI content generation routes
-  app.post("/api/ai/explain", isAuthenticated, async (req, res) => {
+  app.post("/api/ai/explain", async (req, res) => {
     try {
       const { topic, difficulty, context } = req.body;
       if (!topic || !difficulty) {
@@ -86,9 +88,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/ai/quiz", isAuthenticated, async (req: any, res) => {
+  app.post("/api/ai/quiz", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+  // No authentication, use a dummy userId for development
+  const userId = "dev-user";
       const { topic, topicId, questionCount = 5 } = req.body;
       if (!topic || !topicId) {
         return res.status(400).json({ message: "Topic and topicId are required" });
@@ -106,9 +109,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/ai/flashcards", isAuthenticated, async (req: any, res) => {
+  app.post("/api/ai/flashcards", async (req: any, res) => {
     try {
-        const userId = req.user.claims.sub;
+  // No authentication, use a dummy userId for development
+  const userId = "dev-user";
         const { topic, topicId, cardCount = 10 } = req.body;
         if (!topic || !topicId) {
             return res.status(400).json({ message: "Topic and topicId are required" });
@@ -125,7 +129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post("/api/ai/interview", isAuthenticated, async (req, res) => {
+  app.post("/api/ai/interview", async (req, res) => {
     try {
       const { role, level = "intermediate" } = req.body;
       if (!role) {
@@ -138,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/ai/chat", isAuthenticated, async (req: any, res) => {
+  app.post("/api/ai/chat", async (req: any, res) => {
     try {
       const { prompt, history } = req.body;
       if (!prompt) {
@@ -152,9 +156,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Social feed routes
-  app.get("/api/feed", isAuthenticated, async (req: any, res) => {
+  app.get("/api/feed", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+  // No authentication, use a dummy userId for development
+  const userId = "dev-user";
       const limit = parseInt(req.query.limit as string) || 20;
       const posts = await storage.getFeedPosts(userId, limit);
       res.json(posts);
@@ -163,9 +168,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/posts", isAuthenticated, async (req: any, res) => {
+  app.post("/api/posts", async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+  // No authentication, use a dummy userId for development
+  const userId = "dev-user";
       const postData = insertPostSchema.parse({ ...req.body, userId });
       const post = await storage.createPost(postData);
       res.json(post);
@@ -174,9 +180,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-    app.post("/api/posts/:id/like", isAuthenticated, async (req: any, res) => {
+  app.post("/api/posts/:id/like", async (req: any, res) => {
         try {
-            const userId = req.user.claims.sub;
+            // No authentication, use a dummy userId for development
+            const userId = "dev-user";
             await storage.togglePostLike(req.params.id, userId);
             res.json({ success: true });
         } catch (error) {
@@ -185,9 +192,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
   // User progress routes
-  app.get("/api/user/achievements", isAuthenticated, async (req: any, res) => {
+  app.get("/api/user/achievements", async (req: any, res) => {
     try {
-        const userId = req.user.claims.sub;
+  // No authentication, use a dummy userId for development
+  const userId = "dev-user";
         const achievements = await storage.getUserAchievements(userId);
         res.json(achievements);
     } catch (error) {

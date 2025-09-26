@@ -3,17 +3,16 @@ import express, { type Request, Response, NextFunction } from "express";
 import cors from "cors";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { setupAuth } from "./replitAuth"; // Use replitAuth
+// import { setupAuth } from "./replitAuth"; // Replit OIDC removed
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+
 (async () => {
-  // Setup the correct authentication before registering routes
-  await setupAuth(app);
-  
+  // Directly register routes, skip Replit OIDC setup
   const server = await registerRoutes(app);
 
   // A simple and effective global error handler
