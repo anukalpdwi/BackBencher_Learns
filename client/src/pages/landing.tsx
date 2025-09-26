@@ -49,7 +49,7 @@ export default function Landing() {
                   className="border-white text-white hover:bg-white hover:text-primary"
                   data-testid="button-watch-demo"
                 >
-                  Watch Demo
+                  About Us
                 </Button>
               </div>
             </div>
@@ -371,10 +371,11 @@ export default function Landing() {
           </div>
 
           <div className="border-t border-border pt-8 mt-8 text-center text-muted-foreground text-sm">
-            © 2024 EduAI Hub. All rights reserved.
+            © 2025 Backbencher_learns. All rights reserved.
           </div>
         </div>
       </footer>
     </div>
   );
 }
+  
