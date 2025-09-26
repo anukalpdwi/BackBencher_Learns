@@ -16,7 +16,8 @@ export function Navbar() {
   const { user, isAuthenticated } = useAuth();
   const { theme, setTheme } = useTheme();
 
-  const getInitials = (firstName?: string, lastName?: string) => {
+  // Fix: Update the function signature to accept null values
+  const getInitials = (firstName?: string | null, lastName?: string | null) => {
     if (!firstName && !lastName) return "U";
     return `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase();
   };
@@ -55,7 +56,7 @@ export function Navbar() {
               <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
                 <Brain className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold font-display">Backbencher_Learns</span>
+              <span className="text-xl font-bold font-display">EduAI Hub</span>
             </Link>
           </div>
 
