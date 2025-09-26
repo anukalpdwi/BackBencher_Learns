@@ -2,13 +2,14 @@ import { sql } from 'drizzle-orm';
 import {
   index,
   jsonb,
-  pgTable,
+  pgTableCreator,
   timestamp,
   varchar,
   text,
   integer,
   boolean,
   unique,
+  pgTable,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -105,22 +106,31 @@ export const studyGroupMembers = pgTable("study_group_members", {
   groupId: varchar("group_id").notNull().references(() => studyGroups.id, { onDelete: "cascade" }),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   role: varchar("role").default("member"), // "admin", "member"
-  joinedAt: timestamp("joined_at").defaultNow(),
 }, (table) => [
   unique().on(table.groupId, table.userId)
 ]);
 
 // Social feed posts
 export const posts = pgTable("posts", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  content: text("content").notNull(),
-  type: varchar("type").default("progress"), // "progress", "achievement", "general"
-  metadata: jsonb("metadata"), // Additional data like XP gained, level achieved, etc.
-  likeCount: integer("like_count").default(0),
-  commentCount: integer("comment_count").default(0),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    content: text("content").notNull(),
+    type: varchar("type").default("progress"), // "progress", "achievement", "general", "repost"
+    metadata: jsonb("metadata"),
+    likeCount: integer("like_count").default(0),
+    commentCount: integer("comment_count").default(0),
+    repostCount: integer("repost_count").default(0),
+    isRepost: boolean("is_repost").default(false),
+    // We remove the self-reference from the initial definition
+    originalPostId: varchar("original_post_id"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  // We add the self-reference here, in the table callback
+  (table) => ({
+    originalPostReference: index("original_post_idx").on(table.originalPostId),
+  })
+);
+
 
 // Post likes
 export const postLikes = pgTable("post_likes", {
@@ -215,6 +225,10 @@ export const postsRelations = relations(posts, ({ one, many }) => ({
   }),
   likes: many(postLikes),
   comments: many(postComments),
+  originalPost: one(posts, {
+    fields: [posts.originalPostId],
+    references: [posts.id],
+  }),
 }));
 
 // Insert schemas
@@ -256,7 +270,7 @@ export type QuizAttempt = typeof quizAttempts.$inferSelect;
 export type Flashcard = typeof flashcards.$inferSelect;
 export type StudyGroup = typeof studyGroups.$inferSelect;
 export type InsertStudyGroup = z.infer<typeof insertStudyGroupSchema>;
-export type Post = typeof posts.$inferSelect;
+export type Post = typeof posts.$inferSelect & { isLiked?: boolean };
 export type InsertPost = z.infer<typeof insertPostSchema>;
 export type Achievement = typeof achievements.$inferSelect;
 export type LearningSession = typeof learningSessions.$inferSelect;

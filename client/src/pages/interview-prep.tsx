@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { ProBadge } from "@/components/ui/pro-badge";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -251,7 +252,10 @@ export default function InterviewPrep() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">AI Interview Preparation</h1>
+          <div className="flex items-center gap-4">
+    <h1 className="text-3xl font-bold">AI Interview Preparation</h1>
+    <ProBadge />
+</div>
           <p className="text-muted-foreground">
             Practice with AI-powered mock interviews tailored to your target role
           </p>

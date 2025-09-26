@@ -24,17 +24,19 @@ import {
   Flame,
   BookOpen,
   Target,
+  Repeat,
 } from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
+// Fix 1: Align the User interface with the actual data structure (allowing nulls)
 interface User {
   id: string;
-  firstName?: string;
-  lastName?: string;
-  profileImageUrl?: string;
-  level?: number;
-  xp?: number;
-  streak?: number;
+  firstName: string | null;
+  lastName: string | null;
+  profileImageUrl?: string | null;
+  level?: number | null;
+  xp?: number | null;
+  streak?: number | null;
 }
 
 interface Post {
@@ -44,8 +46,12 @@ interface Post {
   metadata?: any;
   likeCount: number;
   commentCount: number;
+  repostCount: number;
+  isRepost: boolean;
+  originalPostId?: string;
   createdAt: string;
   user: User;
+  isLiked?: boolean;
 }
 
 interface Achievement {
@@ -80,13 +86,14 @@ export default function Community() {
   }, [isAuthenticated, isLoading, toast]);
 
   // Fetch feed posts
-  const { data: posts, isLoading: postsLoading } = useQuery({
+  const { data: posts, isLoading: postsLoading } = useQuery<Post[]>({
     queryKey: ["/api/feed"],
     enabled: isAuthenticated,
   });
 
   // Fetch user achievements
-  const { data: achievements, isLoading: achievementsLoading } = useQuery({
+  // Fix 2: Provide the correct type to useQuery for achievements
+  const { data: achievements, isLoading: achievementsLoading } = useQuery<Achievement[]>({
     queryKey: ["/api/user/achievements"],
     enabled: isAuthenticated,
   });
@@ -131,8 +138,7 @@ export default function Community() {
   // Like post mutation
   const likePostMutation = useMutation({
     mutationFn: async (postId: string) => {
-      const response = await apiRequest("POST", `/api/posts/${postId}/like`);
-      return response.json();
+      await apiRequest("POST", `/api/posts/${postId}/like`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/feed"] });
@@ -147,7 +153,38 @@ export default function Community() {
         setTimeout(() => {
           window.location.href = "/api/login";
         }, 500);
-        return;
+      }
+    },
+  });
+
+  // Repost mutation
+  const repostPostMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      await apiRequest("POST", `/api/posts/${postId}/repost`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/feed"] });
+      toast({
+        title: "Reposted!",
+        description: "You've shared this post with your followers.",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+      } else {
+        toast({
+          title: "Error",
+          description: "Could not repost. Please try again.",
+          variant: "destructive",
+        });
       }
     },
   });
@@ -285,7 +322,7 @@ export default function Community() {
                       </CardContent>
                     </Card>
                   ) : (
-                    (posts as Post[]).map((post) => (
+                    posts.map((post) => (
                       <Card key={post.id} className="learning-card">
                         <CardContent className="p-6">
                           <div className="flex items-start space-x-4">
@@ -316,7 +353,7 @@ export default function Community() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-auto p-0 hover:text-accent"
+                                  className={`h-auto p-0 hover:text-red-500 ${post.isLiked ? 'text-red-500' : ''}`}
                                   onClick={() => likePostMutation.mutate(post.id)}
                                   data-testid={`button-like-${post.id}`}
                                 >
@@ -331,6 +368,16 @@ export default function Community() {
                                 >
                                   <MessageCircle className="mr-2 h-4 w-4" />
                                   {post.commentCount} comments
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-auto p-0 hover:text-green-500"
+                                  onClick={() => repostPostMutation.mutate(post.id)}
+                                  data-testid={`button-repost-${post.id}`}
+                                >
+                                  <Repeat className="mr-2 h-4 w-4" />
+                                  {post.repostCount} reposts
                                 </Button>
                                 <Button
                                   variant="ghost"
@@ -449,7 +496,7 @@ export default function Community() {
                   </Card>
                 ) : (
                   <div className="grid md:grid-cols-2 gap-4">
-                    {(achievements as Achievement[]).map((achievement) => (
+                    {achievements.map((achievement) => (
                       <Card key={achievement.id} className="learning-card">
                         <CardContent className="p-6">
                           <div className="flex items-start space-x-4">

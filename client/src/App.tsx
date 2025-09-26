@@ -11,24 +11,28 @@ import Home from "@/pages/home";
 import StudyGroups from "@/pages/study-groups";
 import Community from "@/pages/community";
 import InterviewPrep from "@/pages/interview-prep";
+import { AiChatbot } from "./components/ai-chatbot";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
   return (
-    <Switch>
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <>
-          <Route path="/" component={Home} />
-          <Route path="/study-groups" component={StudyGroups} />
-          <Route path="/community" component={Community} />
-          <Route path="/interview-prep" component={InterviewPrep} />
-        </>
-      )}
-      <Route component={NotFound} />
-    </Switch>
+    <>
+      <Switch>
+        {isLoading || !isAuthenticated ? (
+          <Route path="/" component={Landing} />
+        ) : (
+          <>
+            <Route path="/" component={Home} />
+            <Route path="/study-groups" component={StudyGroups} />
+            <Route path="/community" component={Community} />
+            <Route path="/interview-prep" component={InterviewPrep} />
+          </>
+        )}
+        <Route component={NotFound} />
+      </Switch>
+      {isAuthenticated && <AiChatbot />}
+    </>
   );
 }
 

@@ -55,7 +55,7 @@ export function Navbar() {
               <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
                 <Brain className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold font-display">EduAI Hub</span>
+              <span className="text-xl font-bold font-display">Backbencher_Learns</span>
             </Link>
           </div>
 

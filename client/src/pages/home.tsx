@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/navbar";
 import { ProgressSidebar } from "@/components/progress-sidebar";
-import { LearningContent } from "@/components/learning-content";
+import {LearningContent} from "@/components/learning-content";
 import { SocialFeed } from "@/components/social-feed";
 
 export default function Home() {

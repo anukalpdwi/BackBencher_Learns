@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -42,7 +41,7 @@ export function LearningContent() {
   const queryClient = useQueryClient();
 
   // Fetch user topics
-  const { data: topics, isLoading: topicsLoading } = useQuery({
+  const { data: topics, isLoading: topicsLoading } = useQuery<Topic[]>({
     queryKey: ["/api/topics"],
   });
 
@@ -125,7 +124,7 @@ export function LearningContent() {
 
   // Generate quiz mutation
   const generateQuizMutation = useMutation({
-    mutationFn: async ({ topic, topicId }: { topic: string; topicId?: string }) => {
+    mutationFn: async ({ topic, topicId }: { topic: string; topicId: string }) => {
       const response = await apiRequest("POST", "/api/ai/quiz", {
         topic,
         topicId,
@@ -161,7 +160,7 @@ export function LearningContent() {
 
   // Generate flashcards mutation
   const generateFlashcardsMutation = useMutation({
-    mutationFn: async ({ topic, topicId }: { topic: string; topicId?: string }) => {
+    mutationFn: async ({ topic, topicId }: { topic: string; topicId: string }) => {
       const response = await apiRequest("POST", "/api/ai/flashcards", {
         topic,
         topicId,
@@ -376,7 +375,7 @@ export function LearningContent() {
             </div>
           ) : (
             <div className="space-y-4">
-              {(topics as Topic[]).map((topic) => (
+              {topics.map((topic) => (
                 <Card
                   key={topic.id}
                   className="bg-gradient-to-r from-primary/5 to-secondary/5 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
@@ -440,12 +439,12 @@ export function LearningContent() {
                 <Button
                   className="w-full bg-warning text-white hover:bg-warning/90"
                   onClick={() => {
-                    if (newTopic.trim()) {
-                      generateQuizMutation.mutate({ topic: newTopic });
+                    if (topics && topics.length > 0) {
+                      generateQuizMutation.mutate({ topic: topics[0].title, topicId: topics[0].id });
                     } else {
                       toast({
                         title: "Error",
-                        description: "Please enter a topic first.",
+                        description: "Please create a topic first.",
                         variant: "destructive",
                       });
                     }
@@ -478,12 +477,12 @@ export function LearningContent() {
                 <Button
                   className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
                   onClick={() => {
-                    if (newTopic.trim()) {
-                      generateFlashcardsMutation.mutate({ topic: newTopic });
+                    if (topics && topics.length > 0) {
+                      generateFlashcardsMutation.mutate({ topic: topics[0].title, topicId: topics[0].id });
                     } else {
                       toast({
                         title: "Error",
-                        description: "Please enter a topic first.",
+                        description: "Please create a topic first.",
                         variant: "destructive",
                       });
                     }

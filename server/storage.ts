@@ -43,6 +43,7 @@ export interface IStorage {
   // Quiz operations
   createQuiz(quiz: InsertQuiz): Promise<Quiz>;
   getTopicQuizzes(topicId: string): Promise<Quiz[]>;
+  getQuiz(id: string): Promise<Quiz | undefined>;
   submitQuizAttempt(attempt: {
     quizId: string;
     userId: string;
@@ -63,7 +64,8 @@ export interface IStorage {
   
   // Social operations
   createPost(post: InsertPost): Promise<Post>;
-  getFeedPosts(limit?: number): Promise<(Post & { user: User; likeCount: number; commentCount: number; isLiked?: boolean })[]>;
+  createRepost(originalPostId: string, userId: string): Promise<Post>;
+  getFeedPosts(userId: string, limit?: number): Promise<(Post & { user: User; likeCount: number; commentCount: number; isLiked?: boolean })[]>;
   togglePostLike(postId: string, userId: string): Promise<void>;
   addPostComment(comment: {
     postId: string;
@@ -153,6 +155,11 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(quizzes.createdAt));
   }
 
+  async getQuiz(id: string): Promise<Quiz | undefined> {
+    const [quiz] = await db.select().from(quizzes).where(eq(quizzes.id, id));
+    return quiz;
+  }
+
   async submitQuizAttempt(attempt: {
     quizId: string;
     userId: string;
@@ -197,7 +204,28 @@ export class DatabaseStorage implements IStorage {
     return newPost;
   }
 
-  async getFeedPosts(limit: number = 20): Promise<(Post & { user: User; likeCount: number; commentCount: number })[]> {
+  async createRepost(originalPostId: string, userId: string): Promise<Post> {
+    const [originalPost] = await db.select().from(posts).where(eq(posts.id, originalPostId));
+    if (!originalPost) {
+      throw new Error("Original post not found");
+    }
+
+    const [repost] = await db.insert(posts).values({
+      userId,
+      content: originalPost.content,
+      type: "repost",
+      isRepost: true,
+      originalPostId: originalPost.id,
+    }).returning();
+
+    await db.update(posts).set({
+      repostCount: sql`${posts.repostCount} + 1`,
+    }).where(eq(posts.id, originalPostId));
+
+    return repost;
+  }
+
+  async getFeedPosts(userId: string, limit: number = 20): Promise<(Post & { user: User; likeCount: number; commentCount: number; isLiked?: boolean })[]> {
     const result = await db
       .select({
         id: posts.id,
@@ -208,6 +236,7 @@ export class DatabaseStorage implements IStorage {
         likeCount: posts.likeCount,
         commentCount: posts.commentCount,
         createdAt: posts.createdAt,
+        isLiked: sql<boolean>`EXISTS(SELECT 1 FROM ${postLikes} WHERE ${postLikes.postId} = ${posts.id} AND ${postLikes.userId} = ${userId})`,
         user: {
           id: users.id,
           email: users.email,
@@ -227,7 +256,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(posts.createdAt))
       .limit(limit);
 
-    return result as (Post & { user: User; likeCount: number; commentCount: number })[];
+    return result as (Post & { user: User; likeCount: number; commentCount: number; isLiked: boolean })[];
   }
 
   async togglePostLike(postId: string, userId: string): Promise<void> {
